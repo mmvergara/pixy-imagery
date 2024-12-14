@@ -1,6 +1,6 @@
 # Pixy Imagery
 
-HTTP Based on-premise image solution for development workflows.
+Very simple HTTP Based on-premise image solution for development workflows.
 
 ## Installation
 
