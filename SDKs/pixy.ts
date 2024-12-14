@@ -3,14 +3,11 @@ interface PixyImageryOptions {
   apiKey?: string | null;
 }
 
-interface ImageUploadResult {
-  images: Array<{
-    image_id: string;
-    url: string;
-  }>;
+interface ImageUploadResponse {
+  images: { image_id: string; url: string }[];
 }
 
-interface ResizeOptions {
+interface ImageUrlOptions {
   width?: number;
   height?: number;
   maintainAspectRatio?: boolean;
@@ -22,7 +19,9 @@ export class PixyImagery {
 
   /**
    * Create a new PixyImagery client
-   * @param options - Configuration options
+   * @param {PixyImageryOptions} options - Configuration options
+   * @param {string} [options.baseUrl='http://localhost:5100'] - Base URL of the Pixy Imagery service
+   * @param {string} [options.apiKey=null] - API key for authentication
    */
   constructor(options: PixyImageryOptions = {}) {
     this.baseUrl = options.baseUrl || 'http://localhost:5100';
@@ -31,23 +30,23 @@ export class PixyImagery {
 
   /**
    * Construct URL with API key if required
-   * @param endpoint - Endpoint path
-   * @returns Full URL with optional API key
+   * @param {string} endpoint - Endpoint path
+   * @returns {URL} Full URL with optional API key
    */
-  private _constructUrl(endpoint: string): string {
+  private _constructUrl(endpoint: string): URL {
     const url = new URL(endpoint, this.baseUrl);
     if (this.apiKey) {
       url.searchParams.set('api_key', this.apiKey);
     }
-    return url.toString();
+    return url;
   }
 
   /**
    * Upload one or more images
-   * @param images - Images to upload
-   * @returns Upload result
+   * @param {File[] | FileList} images - Images to upload
+   * @returns {Promise<ImageUploadResponse>} Upload result
    */
-  async uploadImages(images: File[] | FileList): Promise<ImageUploadResult> {
+  async uploadImages(images: File[] | FileList): Promise<ImageUploadResponse> {
     const formData = new FormData();
     
     // Ensure we're working with an array
@@ -60,7 +59,7 @@ export class PixyImagery {
 
     const url = this._constructUrl('/upload-image');
     
-    const response = await fetch(url, {
+    const response = await fetch(url.toString(), {
       method: 'POST',
       body: formData
     });
@@ -74,47 +73,39 @@ export class PixyImagery {
   }
 
   /**
-   * Get an image by its ID
-   * @param imageId - ID of the image
-   * @param options - Resize options
-   * @returns Image blob
+   * Get image URL by its ID
+   * @param {string} imageId - ID of the image
+   * @param {ImageUrlOptions} [options={}] - URL options
+   * @param {number} [options.width] - Desired width
+   * @param {number} [options.height] - Desired height
+   * @param {boolean} [options.maintainAspectRatio=false] - Maintain aspect ratio
+   * @returns {string} Image URL
    */
-  async getImage(imageId: string, options: ResizeOptions = {}): Promise<Blob> {
-    const url = new URL(this._constructUrl(`/${imageId}`));
+  getImageUrl(imageId: string, options: ImageUrlOptions = {}): string {
+    const url = this._constructUrl(`/${imageId}`);
     
     if (options.width) url.searchParams.set('w', options.width.toString());
     if (options.height) url.searchParams.set('h', options.height.toString());
     if (options.maintainAspectRatio) url.searchParams.set('maintain_aspect_ratio', 'true');
 
-    const response = await fetch(url.toString());
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to retrieve image');
-    }
-
-    return response.blob();
+    return url.toString();
   }
 
   /**
-   * Get a random image
-   * @param options - Resize options
-   * @returns Random image blob
+   * Get a random image URL
+   * @param {ImageUrlOptions} [options={}] - URL options
+   * @param {number} [options.width] - Desired width
+   * @param {number} [options.height] - Desired height
+   * @param {boolean} [options.maintainAspectRatio=false] - Maintain aspect ratio
+   * @returns {string} Random image URL
    */
-  async getRandomImage(options: ResizeOptions = {}): Promise<Blob> {
-    const url = new URL(this._constructUrl('/random'));
+  getRandomImageUrl(options: ImageUrlOptions = {}): string {
+    const url = this._constructUrl('/random');
     
     if (options.width) url.searchParams.set('w', options.width.toString());
     if (options.height) url.searchParams.set('h', options.height.toString());
     if (options.maintainAspectRatio) url.searchParams.set('maintain_aspect_ratio', 'true');
 
-    const response = await fetch(url.toString());
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to retrieve random image');
-    }
-
-    return response.blob();
+    return url.toString();
   }
 }

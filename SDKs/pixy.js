@@ -13,14 +13,14 @@ export class PixyImagery {
   /**
    * Construct URL with API key if required
    * @param {string} endpoint - Endpoint path
-   * @returns {string} Full URL with optional API key
+   * @returns {URL} Full URL with optional API key
    */
   _constructUrl(endpoint) {
     const url = new URL(endpoint, this.baseUrl);
     if (this.apiKey) {
       url.searchParams.set('api_key', this.apiKey);
     }
-    return url.toString();
+    return url;
   }
 
   /**
@@ -41,7 +41,7 @@ export class PixyImagery {
 
     const url = this._constructUrl('/upload-image');
     
-    const response = await fetch(url, {
+    const response = await fetch(url.toString(), {
       method: 'POST',
       body: formData
     });
@@ -55,53 +55,39 @@ export class PixyImagery {
   }
 
   /**
-   * Get an image by its ID
+   * Get image URL by its ID
    * @param {string} imageId - ID of the image
-   * @param {Object} [options={}] - Resize options
+   * @param {Object} [options={}] - URL options
    * @param {number} [options.width] - Desired width
    * @param {number} [options.height] - Desired height
    * @param {boolean} [options.maintainAspectRatio=false] - Maintain aspect ratio
-   * @returns {Promise<Blob>} Image blob
+   * @returns {string} Image URL
    */
-  async getImage(imageId, options = {}) {
-    const url = new URL(this._constructUrl(`/${imageId}`));
+  getImageUrl(imageId, options = {}) {
+    const url = this._constructUrl(`/${imageId}`);
     
     if (options.width) url.searchParams.set('w', options.width);
     if (options.height) url.searchParams.set('h', options.height);
     if (options.maintainAspectRatio) url.searchParams.set('maintain_aspect_ratio', 'true');
 
-    const response = await fetch(url.toString());
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to retrieve image');
-    }
-
-    return response.blob();
+    return url.toString();
   }
 
   /**
-   * Get a random image
-   * @param {Object} [options={}] - Resize options
+   * Get a random image URL
+   * @param {Object} [options={}] - URL options
    * @param {number} [options.width] - Desired width
    * @param {number} [options.height] - Desired height
    * @param {boolean} [options.maintainAspectRatio=false] - Maintain aspect ratio
-   * @returns {Promise<Blob>} Random image blob
+   * @returns {string} Random image URL
    */
-  async getRandomImage(options = {}) {
-    const url = new URL(this._constructUrl('/random'));
+  getRandomImageUrl(options = {}) {
+    const url = this._constructUrl('/random');
     
     if (options.width) url.searchParams.set('w', options.width);
     if (options.height) url.searchParams.set('h', options.height);
     if (options.maintainAspectRatio) url.searchParams.set('maintain_aspect_ratio', 'true');
 
-    const response = await fetch(url.toString());
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to retrieve random image');
-    }
-
-    return response.blob();
+    return url.toString();
   }
 }

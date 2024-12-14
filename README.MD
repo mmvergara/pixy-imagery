@@ -39,6 +39,7 @@ In the `.SDKs` folder, you can use the following SDKs to interact with the API o
 - Javascript
 - Typescript
 - Python
+- Golang
 
 just copy them no need for a package
 
