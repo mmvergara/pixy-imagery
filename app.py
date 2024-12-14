@@ -11,9 +11,8 @@ app = Flask(__name__)
 load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
-
 if API_KEY == None:
-    raise Exception("API_KEY is not set")
+    print("API Key is not set, no api key is needed to access the service")
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -21,6 +20,12 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 app.config["API_KEY"] = API_KEY
+
+
+def validate_api_key(api_key):
+    if API_KEY == None:
+        return True
+    return api_key == API_KEY
 
 
 @app.route("/")
@@ -31,7 +36,7 @@ def index():
 @app.route("/upload-image", methods=["POST"])
 def upload_image():
     api_key = request.args.get("api_key", type=str)
-    if not api_key or api_key != app.config["API_KEY"]:
+    if not validate_api_key(api_key):
         return jsonify({"error": "Invalid API key"}), 403
 
     if "images" not in request.files:
@@ -64,7 +69,7 @@ def upload_image():
 @app.route("/<image_id>")
 def serve_image(image_id):
     api_key = request.args.get("api_key", type=str)
-    if not api_key or api_key != app.config["API_KEY"]:
+    if not validate_api_key(api_key):
         return jsonify({"error": "Invalid API key"}), 403
 
     matching_files = [
@@ -99,7 +104,7 @@ def serve_image(image_id):
 @app.route("/random")
 def random_image():
     api_key = request.args.get("api_key", type=str)
-    if not api_key or api_key != app.config["API_KEY"]:
+    if not validate_api_key(api_key):
         return jsonify({"error": "Invalid API key"}), 403
 
     uploaded_images = os.listdir(app.config["UPLOAD_FOLDER"])
