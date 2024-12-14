@@ -29,7 +29,7 @@ def index():
 
 @app.route("/upload-image", methods=["POST"])
 def upload_image():
-    api_key = request.form.get("api_key")
+    api_key = request.args.get("api_key", type=str)
     if not api_key or api_key != app.config["API_KEY"]:
         return jsonify({"error": "Invalid API key"}), 403
 
@@ -62,6 +62,10 @@ def upload_image():
 
 @app.route("/<image_id>")
 def serve_image(image_id):
+    api_key = request.args.get("api_key", type=str)
+    if not api_key or api_key != app.config["API_KEY"]:
+        return jsonify({"error": "Invalid API key"}), 403
+
     matching_files = [
         f for f in os.listdir(app.config["UPLOAD_FOLDER"]) if f.startswith(image_id)
     ]
@@ -93,7 +97,10 @@ def serve_image(image_id):
 
 @app.route("/random")
 def random_image():
-    # Get list of uploaded images
+    api_key = request.args.get("api_key", type=str)
+    if not api_key or api_key != app.config["API_KEY"]:
+        return jsonify({"error": "Invalid API key"}), 403
+
     uploaded_images = os.listdir(app.config["UPLOAD_FOLDER"])
 
     if not uploaded_images:
@@ -102,11 +109,17 @@ def random_image():
     random_image_filename = random.choice(uploaded_images)
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], random_image_filename)
 
-    width = random.randint(100, 800)
-    height = random.randint(100, 800)
+    # Optional query parameters
+    width = request.args.get("w", type=int)
+    height = request.args.get("h", type=int)
+    maintain_aspect_ratio = request.args.get("maintain_aspect_ratio", type=bool)
 
     with Image.open(filepath) as img:
-        img.thumbnail((width, height), Image.LANCZOS)
+        if width and height:
+            if maintain_aspect_ratio:
+                img.thumbnail((width, height), Image.LANCZOS)
+            else:
+                img = img.resize((width, height), Image.LANCZOS)
 
         img_io = BytesIO()
         img.save(img_io, "PNG")

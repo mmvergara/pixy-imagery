@@ -269,13 +269,11 @@
         const files = fileInput.files;
 
         const formData = new FormData();
-        formData.append("api_key", apiKey);
-
         for (let i = 0; i < files.length; i++) {
           formData.append("images", files[i]);
         }
 
-        fetch("/upload-image", {
+        fetch(`/upload-image?api_key=${apiKey}`, {
           method: "POST",
           body: formData,
         })
