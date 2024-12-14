@@ -5,13 +5,14 @@ from PIL import Image
 import random
 from io import BytesIO
 from dotenv import load_dotenv
+
 app = Flask(__name__)
 
 load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
 
-if (API_KEY == None):
+if API_KEY == None:
     raise Exception("API_KEY is not set")
 
 UPLOAD_FOLDER = "uploads"
