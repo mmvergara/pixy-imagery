@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pixy Imagery</title>
+    <style>
+      body {
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f0f4f8;
+      }
+      .container {
+        width: 500px;
+        background-color: #fff;
+        border-radius: 15px;
+        border: 4px solid #e2eaf2;
+        box-shadow: 0 6px 10px rgba(207, 212, 222, 0.3);
+        padding: 30px;
+        transition: all 0.3s ease;
+        font-weight: bold;
+      }
+      .upload-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .upload-area {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      #file-input {
+        display: none;
+      }
+      .file-label {
+        display: inline-block;
+        width: 100%;
+        height: 100px;
+        border: 4px dashed #7cdacc;
+        border-radius: 15px;
+
+        cursor: pointer;
+        color: #2cb5a0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        transition: all 0.3s ease;
+      }
+      .file-label:hover {
+        background-color: #7cdacc46;
+      }
+
+      #images-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      #images-table th,
+      #images-table td {
+        border: 1px solid #e2eaf2;
+        padding: 12px;
+        text-align: left;
+      }
+      #images-table th {
+        background-color: #f8fafc;
+        color: #2cb5a0;
+      }
+      .upload-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+      }
+      #api-key {
+        padding: 10px 15px;
+        border: 3px solid #7cdacc;
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 0.3s;
+        width: 200px;
+        font-weight: bold;
+      }
+
+      #upload-btn {
+        background-color: #2cb5a0;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+        height: 45px;
+        border: 4px solid #7cdacc;
+        font-weight: bold;
+      }
+      #upload-btn:hover {
+        background-color: #28a090;
+      }
+      #upload-btn:disabled {
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        color: #2cb5a0;
+        margin: 0;
+      }
+
+      .header-links a {
+        color: #2cb5a0;
+        text-decoration: none;
+        margin-left: 15px;
+        font-size: 14px;
+        transition: color 0.3s ease;
+      }
+
+      .header-links a:hover {
+        color: #28a090;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Pixy Imagery</h1>
+        <div class="header-links">
+          <a href="/docs">Github Repository | Docs </a>
+        </div>
+      </div>
+      <div class="upload-area">
+        <input type="file" id="file-input" multiple accept="image/*" />
+        <label for="file-input" class="file-label"> Select Files </label>
+      </div>
+
+      <div class="upload-header">
+        <div class="upload-controls">
+          <input
+            type="text"
+            id="api-key"
+            placeholder="Enter API Key"
+            required
+          />
+          <button id="upload-btn">Upload Images</button>
+        </div>
+      </div>
+
+      <table id="images-table" style="display: none">
+        <thead>
+          <tr>
+            <th>Filename</th>
+            <th>Size</th>
+          </tr>
+        </thead>
+        <tbody id="images-list"></tbody>
+        <tfoot>
+          <tr>
+            <th>Total Files</th>
+            <th id="total-files">0</th>
+          </tr>
+          <tr>
+            <th>Total Size</th>
+            <th id="total-size">0 KB</th>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div id="result"></div>
+    </div>
+
+    <script>
+      const fileInputLabel = document.querySelector(".file-label");
+      const fileInput = document.getElementById("file-input");
+      const apiKeyInput = document.getElementById("api-key");
+      const uploadBtn = document.getElementById("upload-btn");
+      const resultDiv = document.getElementById("result");
+      const imagesTable = document.getElementById("images-table");
+      const imagesList = document.getElementById("images-list");
+      const totalFilesSpan = document.getElementById("total-files");
+      const totalSizeSpan = document.getElementById("total-size");
+
+      let isUploading = false;
+
+      function setLoadingState(loading) {
+        isUploading = loading;
+        uploadBtn.disabled = loading;
+        fileInput.disabled = loading;
+        apiKeyInput.disabled = loading;
+        fileInputLabel.style.cursor = loading ? "not-allowed" : "pointer";
+        fileInputLabel.textContent = loading ? "Uploading..." : "Select Files";
+        uploadBtn.textContent = loading ? "Uploading..." : "Upload Images";
+      }
+
+      fileInput.addEventListener("change", handleFiles, false);
+      apiKeyInput.addEventListener("input", checkUploadEligibility);
+
+      function handleFiles(files) {
+        files = files.target ? files.target.files : files;
+
+        imagesList.innerHTML = "";
+        let totalSize = 0;
+
+        // Calculate how many files to show
+        const maxDisplayFiles = 5;
+        const totalFiles = files.length;
+        const filesToShow = Math.min(maxDisplayFiles, totalFiles);
+
+        // Show the first 5 files
+        for (let i = 0; i < filesToShow; i++) {
+          const file = files[i];
+          const row = document.createElement("tr");
+          const nameCell = document.createElement("td");
+          const sizeCell = document.createElement("td");
+
+          nameCell.textContent = file.name;
+          sizeCell.textContent = (file.size / 1024).toFixed(2) + " KB";
+
+          row.appendChild(nameCell);
+          row.appendChild(sizeCell);
+          imagesList.appendChild(row);
+        }
+
+        // Add "and more..." row if there are more than 5 files
+        if (totalFiles > maxDisplayFiles) {
+          const moreRow = document.createElement("tr");
+          const moreCell = document.createElement("td");
+          moreCell.textContent = "and more...";
+          moreCell.colSpan = 2;
+          moreCell.style.textAlign = "center";
+          moreCell.style.fontStyle = "italic";
+          moreRow.appendChild(moreCell);
+          imagesList.appendChild(moreRow);
+        }
+
+        // Calculate total size for ALL files
+        for (let file of files) {
+          totalSize += file.size;
+        }
+
+        totalFilesSpan.textContent = files.length;
+        totalSizeSpan.textContent = (totalSize / 1024).toFixed(2) + " KB";
+        imagesTable.style.display = "table";
+        checkUploadEligibility();
+      }
+
+      function checkUploadEligibility() {
+        const hasApiKey = apiKeyInput.value.trim() !== "";
+        const hasFiles = fileInput.files.length > 0;
+      }
+
+      function uploadImages() {
+        setLoadingState(true);
+        const apiKey = apiKeyInput.value;
+        const files = fileInput.files;
+
+        const formData = new FormData();
+        formData.append("api_key", apiKey);
+
+        for (let i = 0; i < files.length; i++) {
+          formData.append("images", files[i]);
+        }
+
+        fetch("/upload-image", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.images) {
+              resultDiv.innerHTML = `
+                <div style="color: green; margin-top: 10px;">
+                  Images Uploaded!
+                </div>
+              `;
+              resetUI();
+            } else {
+              resultDiv.innerHTML = `<div style="color: red; margin-top: 10px;">Error: ${data.error}</div>`;
+            }
+          })
+          .catch((error) => {
+            resultDiv.innerHTML = `<div style="color: red; margin-top: 10px;">Upload failed: ${error}</div>`;
+          })
+          .finally(() => {
+            setLoadingState(false);
+          });
+      }
+
+      function resetUI() {
+        fileInput.value = "";
+        apiKeyInput.value = "";
+        imagesList.innerHTML = "";
+        imagesTable.style.display = "none";
+        totalFilesSpan.textContent = "0";
+        totalSizeSpan.textContent = "0 KB";
+        setTimeout(() => {
+          resultDiv.innerHTML = "";
+        }, 10000);
+      }
+
+      uploadBtn.addEventListener("click", uploadImages);
+    </script>
+  </body>
+</html>
