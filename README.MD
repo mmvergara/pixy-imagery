@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-<img src="logo.png" width="200" height="200" />
+<img src="./repo-assets/logo.png" width="200" height="200" />
 </p>
 
 <p align="center">
@@ -71,3 +71,8 @@ If API_KEY is set in `.env`, all endpoints require `?api_key=<api_key>` in the q
 - `w` (width)
 - `h` (height)
 - `maintain_aspect_ratio` (boolean, default: `false`)
+
+# Screenshots
+
+![Screenshot 1](./repo-assets/1.png)
+![Screenshot 2](./repo-assets/2.png)
