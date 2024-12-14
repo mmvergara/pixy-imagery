@@ -32,6 +32,16 @@ python app.py
 # Visit http://localhost:5100
 ```
 
+## SDKs
+
+In the `.SDKs` folder, you can use the following SDKs to interact with the API or just use the API Endpoints directly.
+
+- Javascript
+- Typescript
+- Python
+
+just copy them no need for a package
+
 ## API Reference
 
 **IMPORTANT** <br/>
