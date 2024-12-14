@@ -9,12 +9,18 @@ app = Flask(__name__)
 
 load_dotenv()
 
+API_KEY = os.getenv("API_KEY")
+
+if (API_KEY == None):
+    raise Exception("API_KEY is not set")
+
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
-app.config["API_KEY"] = os.getenv("API_KEY")
+app.config["API_KEY"] = API_KEY
+
 
 @app.route("/")
 def index():
