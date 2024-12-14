@@ -4,8 +4,6 @@ Very simple HTTP Based on-premise image solution for development workflows.
 
 ## Installation
 
-Fill up `.env` file (see .env.example)
-
 ### Docker (Recommended)
 
 ```bash
@@ -26,7 +24,8 @@ python app.py
 
 ## API Reference
 
-`?api_key=<api_key>` is required for all endpoints
+**IMPORTANT** <br/>
+If API_KEY is set in `.env`, all endpoints require `?api_key=<api_key>` in the query string.
 
 ### `POST /upload-image`
 

@@ -11,8 +11,18 @@ app = Flask(__name__)
 load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
+
+if API_KEY == "":
+    API_KEY = None
+
 if API_KEY == None:
-    print("API Key is not set, no api key is needed to access the service")
+    print("INFO: API Key is not set, no api key is needed to access the service")
+    print("INFO: API Key is not set, no api key is needed to access the service")
+    print("INFO: API Key is not set, no api key is needed to access the service")
+else:
+    print("INFO: API Key is set, api key is needed to access the service")
+    print("INFO: API Key is set, api key is needed to access the service")
+    print("INFO: API Key is set, api key is needed to access the service")
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -88,11 +98,13 @@ def serve_image(image_id):
 
     with Image.open(filepath) as img:
         # Resize if width and height are specified
-        if width and height:
+        if width or height:
             if maintain_aspect_ratio:
-                img.thumbnail((width, height), Image.LANCZOS)
+                img.thumbnail((width or img.width, height or img.height), Image.LANCZOS)
             else:
-                img = img.resize((width, height), Image.LANCZOS)
+                img = img.resize(
+                    (width or img.width, height or img.height), Image.LANCZOS
+                )
 
         img_io = BytesIO()
         img.save(img_io, "PNG")
@@ -121,11 +133,13 @@ def random_image():
     maintain_aspect_ratio = request.args.get("maintain_aspect_ratio", type=bool)
 
     with Image.open(filepath) as img:
-        if width and height:
+        if width or height:
             if maintain_aspect_ratio:
-                img.thumbnail((width, height), Image.LANCZOS)
+                img.thumbnail((width or img.width, height or img.height), Image.LANCZOS)
             else:
-                img = img.resize((width, height), Image.LANCZOS)
+                img = img.resize(
+                    (width or img.width, height or img.height), Image.LANCZOS
+                )
 
         img_io = BytesIO()
         img.save(img_io, "PNG")
