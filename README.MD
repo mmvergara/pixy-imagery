@@ -12,6 +12,9 @@ Very simple HTTP Based on-premise image solution for development workflows.
 
 ---
 
+## Why?
+Have you ever get tired of setting up cloudinary? uploadthing? any image hosting to upload and serve images for your hobby project? Pixy Imagery lets you upload then give you the url to serve it. that simple... upload then return the image url to be saved in your database. 
+
 ## Installation
 
 ### Docker (Recommended)
